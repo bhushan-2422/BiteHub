@@ -1,8 +1,23 @@
 import { Hotel } from "../models/hotel.model.js";
+import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+
+const generateAccessAndRefreshToken = async(hotelId)=>{
+    try{
+        const hotel = await Hotel.findById(hotelId)
+        const accessToken = hotel.generateAccessToken()
+        const refreshToken = hotel.generateRefreshToken()
+        hotel.refreshToken = refreshToken
+
+        await hotel.save({validateBeforeSave:false})
+        return {refreshToken, accessToken}
+    }catch(e){
+        throw new ApiError(400,`failed to generate access and refresh token.. ${e}`)
+    }
+}
 
 const registerHotel = asyncHandler(async(req,res)=>{
     console.log(req.body)
@@ -44,5 +59,59 @@ const registerHotel = asyncHandler(async(req,res)=>{
     .status(200)
     .json(new ApiResponse(200,createdHotel,"new hotel is registered succesfully..."))
 })
+const loginHotel = asyncHandler(async(req,res)=>{
+    const {email,phone, password} = req.body
+    if ((!email && !phone) || !password) {
+        throw new ApiError(400, "Email or phone is required. Password is required.")
+    }
 
-export {registerHotel}
+    const hotel = await Hotel.findOne(
+        {
+            $or:[{email},{phone}]
+        }
+    )
+    if(!hotel){
+        throw new ApiError(400,"hotel does not exist")
+    }
+    console.log(hotel)
+    const {refreshToken, accessToken} = await generateAccessAndRefreshToken(hotel._id)
+
+    const loggedInHotel = await Hotel.findById(hotel._id).select("-password -refreshToken")
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+    return res
+    .status(200)
+    .cookie("accessToken",accessToken,options)
+    .cookie("refreshToken",refreshToken,options)
+    .json(new ApiResponse(
+        200,
+        {
+            hotel: loggedInHotel,
+            accessToken,
+            refreshToken
+        },
+        "hotel logged in succesfully.."))
+})
+
+const logoutHotel = asyncHandler(async(req,res)=>{
+    await Hotel.findByIdAndUpdate(
+        req.hotel._id,
+        {
+            $set: {refreshToken: undefined}
+        },
+        {new: true}
+    )
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+    return res
+    .status(200)
+    .cookie("accessToken",options)
+    .cookie("refreshToken",options)
+    .json(new ApiResponse(200,{},"user logged out succesfully..."))
+})
+ 
+export {registerHotel, loginHotel,logoutHotel}

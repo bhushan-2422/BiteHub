@@ -53,9 +53,9 @@ const hotelSchema = new Schema(
     }
 )
 
-hotelSchema.pre("save",async function(next){
-    if(!this.isModified("password")) next()
-    this.password = await bcrypt.hash(this.password, 10)    
+hotelSchema.pre("save",async function(){
+    if(!this.isModified("password")) return
+    this.password = await bcrypt.hash(this.password, 10)  
 })
 
 hotelSchema.methods.isPasswordCorrect = async function
@@ -64,7 +64,7 @@ hotelSchema.methods.isPasswordCorrect = async function
 }
 
 
-hotelSchema.methods.generateAccessToken = async function(){
+hotelSchema.methods.generateAccessToken =  function(){
     return jwt.sign(
         {
             _id : this._id,
@@ -80,7 +80,7 @@ hotelSchema.methods.generateAccessToken = async function(){
     )
 }
 
-hotelSchema.methods.generateRefreshToken = async function(){
+hotelSchema.methods.generateRefreshToken =  function(){
     return jwt.sign(
         {
             _id: this._id
