@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { deleteUser, registerUser, sayMyName, sendOtp, userLogin } from "../controllers/user.controller.js";
+import { addToCart, deleteUser, registerUser, sayMyName, sendOtp, userLogin, viewMenu } from "../controllers/user.controller.js";
+import { verifyJwtUser } from "../middleware/userAuth.middleware.js";
 
 const router = Router()
 
@@ -9,4 +10,6 @@ router.route("/send-otp").post(sendOtp)
 router.route("/user-login").post(userLogin)
 router.route("/delete-user").post(deleteUser)
 
+router.route("/view-menu").get(verifyJwtUser,viewMenu)
+router.route("/add-to-cart").post(verifyJwtUser, addToCart)
 export default router

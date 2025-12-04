@@ -12,20 +12,16 @@ const itemSchema = new Schema(
         },
         rating:{
             type:Number,
-            required:true,
             min:0,
             max:5
         },
         itemAvatar:{
             type:String
         },
-        type:{
-            type:String,
-            enum:['veg','non-veg','egg']
-        },
         category:{
             type:String,
-            enum:['rice','breakfast','soups','south indian','beverages','breads']
+            enum:['rice','breakfast','soups','south indian','beverages','breads','other'],
+            default:'other'
         },
         owner:{
             type:Schema.Types.ObjectId,

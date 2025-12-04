@@ -1,28 +1,56 @@
 import mongoose,{Schema} from "mongoose";
 
+const orderItemSchema = new Schema(
+  {
+    item: {
+      type: Schema.Types.ObjectId,
+      ref: "Item",
+      required: true,
+    },
+    quantity: {
+      type: Number,
+      default: 1,
+      min: 1,
+    },
+    priceAtPurchase: {
+      type: Number,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
 const orderSchema = new Schema(
     {
         user:{
             type: Schema.Types.ObjectId,
-            ref: "User"
+            ref: "User",
+            required: true
         },
         hotel:{
             type: Schema.Types.ObjectId,
-            ref: "Hotel"
+            ref: "Hotel",
+            required: true
         },
-        items:[
-            {
-                type:Schema.Types.ObjectId,
-                ref:'Item'
-            }
-        ],
+        items:{
+            type:[orderItemSchema],
+            default:[]
+        },
         status:{
             type:String,
-            enum:['Delivered','not delivered']
+            enum:['cart', 'placed', 'accepted', 'on_the_way', 'delivered'],
+            default:'cart'
         },
         total:{
             type: Number,
-            required: true
+        },
+        paymentStatus:{
+            type: String,
+            enum:['pending', 'paid', 'failed', 'refunded']
+        },
+        paymentMethod:{
+            type:String,
+            enum:['upi','cash']
         }
     },{
         timestamps: true

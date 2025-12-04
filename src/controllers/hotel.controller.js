@@ -1,4 +1,5 @@
 import { Hotel } from "../models/hotel.model.js";
+import { Item } from "../models/items.model.js";
 import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -113,5 +114,40 @@ const logoutHotel = asyncHandler(async(req,res)=>{
     .cookie("refreshToken",options)
     .json(new ApiResponse(200,{},"user logged out succesfully..."))
 })
+
+const addMenuItems = asyncHandler(async(req,res)=>{
+    const {title,price, category} = req.body
+    const ownerId = req.hotel._id
+
+    if(!(title && price && category && ownerId)){
+        throw new ApiError(400,"all fields are required...")
+    }
+
+    const avatarLocalPath = req.files?.itemAvatar[0]?.path
+    if(!avatarLocalPath){
+        throw new ApiError(400,"itemAvatar file is required")
+    }
+    const itemAvatar = await uploadOnCloudinary(avatarLocalPath)
+    if(!itemAvatar){
+        throw new ApiError(400,"failed to upload on cloudinary..")
+    }
+
+    const item = await Item.create(
+        {
+            title,
+            price,
+            category,
+            owner:ownerId,
+            itemAvatar: itemAvatar.url
+        }
+    )
+    
+    return res
+    .status(200)
+    .json(new ApiResponse(200,item,"item is created"))
+})
+
+
+
  
-export {registerHotel, loginHotel,logoutHotel}
+export {registerHotel, loginHotel,logoutHotel, addMenuItems}
