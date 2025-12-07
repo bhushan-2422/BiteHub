@@ -228,7 +228,7 @@ const makeOrder = asyncHandler(async(req,res)=>{
     if(!order){
         throw new ApiError(400,"cart not found or already placed..")
     }
-    if(order.items.length() == 0){
+    if(order.items.length == 0){
         throw new ApiError(400,"no items in cart")
     }
 

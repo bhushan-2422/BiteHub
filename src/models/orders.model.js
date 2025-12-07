@@ -32,13 +32,17 @@ const orderSchema = new Schema(
             ref: "Hotel",
             required: true
         },
+        partner:{
+            type: Schema.Types.ObjectId,
+            ref:'Partner'
+        },
         items:{
             type:[orderItemSchema],
             default:[]
         },
         status:{
             type:String,
-            enum:['cart', 'placed', 'accepted', 'on_the_way', 'delivered'],
+            enum:['cart', 'placed', 'accepted','declined','picked_up', 'delivered'],
             default:'cart'
         },
         total:{
