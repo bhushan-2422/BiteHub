@@ -1,7 +1,9 @@
-// AddMenu.jsx
-import React, { useContext, useEffect, useState } from "react";
-import axios from "axios";
-// import { hotelContext } from "../context/hotelContext"; // adjust to your context path
+import { useContext, useState } from "react"
+import { Navigate } from "react-router-dom"
+import axios from "axios"
+import { AuthContext } from "../../context/AuthProvider"
+import HotelNavbar from "./component/HotelNavbar"
+import HotelFooter from "./component/HotelFooter"
 
 const CATEGORIES = [
   "rice",
@@ -11,153 +13,194 @@ const CATEGORIES = [
   "beverages",
   "breads",
   "other",
-];
+]
 
-export default function AddMenu() {
-//   const { hotel } = useContext(hotelContext) || {}; // expects hotel.token for auth
-  const [title, setTitle] = useState("");
-  const [price, setPrice] = useState("");
-  const [category, setCategory] = useState(CATEGORIES[0]);
-  const [imageFile, setImageFile] = useState(null);
+const AddMenu = () => {
+  const { user, loading } = useContext(AuthContext)
 
-  useEffect(() => {
-    setCategory(CATEGORIES[0]);
-  }, []);
+  const [form, setForm] = useState({
+    title: "",
+    price: "",
+    category: "",
+  })
 
-  const handleImageChange = (e) => {
-    const f = e.target.files && e.target.files[0];
-    setImageFile(f || null);
-  };
+  const [itemAvatar, setItemAvatar] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(null)
+
+  if (loading) return null
+  if (!user || user.role !== "hotel") {
+    return <Navigate to="/hotel/login" replace />
+  }
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setForm((prev) => ({ ...prev, [name]: value }))
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
+    setError(null)
+    setSuccess(null)
 
-    // Minimal validation: backend requires these
-    if (!title.trim() || price === "" || Number(price) <= 0 || !category) {
-      console.warn("Validation failed: title, positive price and category are required.");
-      return;
-    }
-    if (!imageFile) {
-      console.warn("Validation failed: itemAvatar file is required.");
-      return;
+    if (!itemAvatar) {
+      setError("Item image is required")
+      return
     }
 
     try {
-      const formData = new FormData();
-      formData.append("title", title.trim());
-      formData.append("price", Number(price));
-      formData.append("category", category);
-      // backend expects file field name 'itemAvatar' (they access req.files?.itemAvatar[0])
-      formData.append("itemAvatar", imageFile);
+      setSubmitting(true)
 
-      const config = { headers: {} };
-      // include auth if token exists; server should identify hotel via token -> req.hotel
-      if (hotel && hotel.token) {
-        config.headers.Authorization = `Bearer ${hotel.token}`;
-      }
+      const formData = new FormData()
+      formData.append("title", form.title)
+      formData.append("price", form.price)
+      formData.append("category", form.category)
+      formData.append("itemAvatar", itemAvatar)
 
-      // axios will set Content-Type multipart/form-data with boundary automatically in the browser
-      const res = await axios.post("/api/v1/user/add-menu-items", formData, config);
-      console.log("Add menu response:", res.data);
+      await axios.post("/api/v1/hotel/add-menu-items", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
 
-      // reset form
-      setTitle("");
-      setPrice("");
-      setCategory(CATEGORIES[0]);
-      setImageFile(null);
-      // no UI messages per your requirement
+      setSuccess("Menu item added successfully")
+      setForm({ title: "", price: "", category: "" })
+      setItemAvatar(null)
     } catch (err) {
-      console.error("Failed to add menu item:", err.response?.data || err.message || err);
+      setError(err?.response?.data?.message || "Failed to add menu item")
+    } finally {
+      setSubmitting(false)
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen flex items-start justify-center bg-gray-50 py-10 px-4">
-      <div className="w-full max-w-2xl bg-white rounded-lg shadow p-6">
-        <h2 className="text-2xl font-semibold mb-4">Add Menu Item</h2>
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100">
 
-        <form onSubmit={handleSubmit} className="space-y-4" encType="multipart/form-data">
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
-            <input
-              id="title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Paneer Butter Masala"
-              className="mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
-              required
-            />
+      {/* Navbar */}
+      <HotelNavbar />
+
+      <main className="flex-1">
+        <div className="max-w-4xl mx-auto px-6 py-16">
+
+          {/* Header */}
+          <div className="mb-10">
+            <h1 className="text-3xl font-extrabold text-gray-900">
+              Add Menu Item
+            </h1>
+            <p className="mt-2 text-gray-600">
+              Create a new food item for your restaurant menu.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price</label>
-              <input
-                id="price"
-                type="number"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="e.g. 199"
-                className="mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                required
-                min="0"
-                step="0.01"
-              />
-            </div>
+          {/* Card */}
+          <div className="relative bg-[#fffaf5] rounded-3xl shadow-xl border border-orange-200 p-8">
 
-            <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700">Category</label>
-              <select
-                id="category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="mt-1 block w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                required
+            {/* Accent strip */}
+            <div className="absolute inset-x-0 top-0 h-1 rounded-t-3xl bg-gradient-to-r from-orange-400 to-orange-600" />
+
+            {error && (
+              <div className="mb-4 bg-red-50 border border-red-200 text-red-600 p-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="mb-4 bg-green-50 border border-green-200 text-green-700 p-3 rounded-lg text-sm">
+                {success}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Item Title
+                </label>
+                <input
+                  name="title"
+                  value={form.title}
+                  onChange={handleChange}
+                  placeholder="Paneer Butter Masala"
+                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  required
+                />
+              </div>
+
+              {/* Price & Category */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Price (₹)
+                  </label>
+                  <input
+                    name="price"
+                    type="number"
+                    value={form.price}
+                    onChange={handleChange}
+                    placeholder="250"
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <select
+                    name="category"
+                    value={form.category}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    required
+                  >
+                    <option value="" disabled>
+                      Select category
+                    </option>
+                    {CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Image */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Item Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setItemAvatar(e.target.files[0])}
+                  className="w-full text-sm text-gray-600
+                             file:mr-4 file:py-2 file:px-4
+                             file:rounded-xl file:border-0
+                             file:bg-orange-500 file:text-white
+                             hover:file:bg-orange-600"
+                  required
+                />
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold py-3 rounded-xl shadow-md hover:shadow-lg hover:from-orange-600 hover:to-orange-700 transition disabled:opacity-60"
               >
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c.charAt(0).toUpperCase() + c.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
+                {submitting ? "Adding Item..." : "Add Menu Item"}
+              </button>
+            </form>
           </div>
+        </div>
+      </main>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Item Avatar (required)</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="mt-1 block w-full text-sm text-gray-600"
-              required
-            />
-          </div>
-
-          <div className="pt-4 flex items-center justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setTitle("");
-                setPrice("");
-                setCategory(CATEGORIES[0]);
-                setImageFile(null);
-              }}
-              className="px-4 py-2 border rounded-md text-sm"
-            >
-              Reset
-            </button>
-
-            <button
-              type="submit"
-              className="px-4 py-2 rounded-md text-sm text-white bg-orange-500 hover:bg-orange-600"
-            >
-              Add Item
-            </button>
-          </div>
-        </form>
-      </div>
+      {/* Footer */}
+      <HotelFooter />
     </div>
-  );
+  )
 }
+
+export default AddMenu

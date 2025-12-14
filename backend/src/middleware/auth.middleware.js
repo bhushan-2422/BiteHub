@@ -1,26 +1,28 @@
 import jwt from "jsonwebtoken";
-import { ApiError } from "../utils/ApiError.js";
-import { asyncHandler } from "../utils/asyncHandler.js";
 import { Hotel } from "../models/hotel.model.js";
 
-export const verifyJwt = asyncHandler(async(req,res,next)=>{
-    try{
-        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","")
-        
-        if(!token){
-            throw new ApiError(401,"unauthorized request..")
-        }
+export const verifyJwt = async (req, res, next) => {
+  try {
+    const token =
+      req.cookies?.accessToken ||
+      req.header("Authorization")?.replace("Bearer ", "");
 
-        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
-        const hotel = await Hotel.findById(decodedToken?._id)
-        if(!hotel){
-            throw new ApiError(400,"invalid access token..")
-
-        }
-        req.hotel = hotel
-        next()
-        
-    }catch(e){
-        throw new ApiError(401,e?.message || "invalid access token")
+    // 🔹 Not logged in → 401 (DO NOT THROW)
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
-})
+
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+    const hotel = await Hotel.findById(decoded._id);
+    if (!hotel) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+
+    req.hotel = hotel;
+    next();
+  } catch (err) {
+    console.error("verifyJwtHotel error:", err.message);
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+};

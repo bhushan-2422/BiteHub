@@ -1,5 +1,6 @@
 import { Hotel } from "../models/hotel.model.js";
 import { Item } from "../models/items.model.js";
+import { Order } from "../models/orders.model.js";
 import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -96,6 +97,12 @@ const loginHotel = asyncHandler(async(req,res)=>{
         "hotel logged in succesfully.."))
 })
 
+const getCurrentHotel = asyncHandler(async (req, res) => {
+  return res
+    .status(200)
+    .json(new ApiResponse(200, req.hotel, "user fetched succesfully.."));
+});
+
 const logoutHotel = asyncHandler(async(req,res)=>{
     await Hotel.findByIdAndUpdate(
         req.hotel._id,
@@ -114,6 +121,8 @@ const logoutHotel = asyncHandler(async(req,res)=>{
     .cookie("refreshToken",options)
     .json(new ApiResponse(200,{},"user logged out succesfully..."))
 })
+
+
 
 const addMenuItems = asyncHandler(async(req,res)=>{
     const {title,price, category} = req.body
@@ -147,7 +156,35 @@ const addMenuItems = asyncHandler(async(req,res)=>{
     .json(new ApiResponse(200,item,"item is created"))
 })
 
+const getMenuItems = asyncHandler(async(req,res)=>{
+    const hotel = req.hotel;
+    if(!hotel){
+        throw new ApiError(400,"invalid hotel...")
+    }
+    const items = await Item.find({owner: hotel?._id})
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200,items,"items fetched succesfully.."))
+})
+
+const placedOrders = asyncHandler(async(req,res)=>{
+    const hotel = req.hotel
+    if(!hotel){
+        throw new ApiError(400,"invalid hotel..")
+    }
+
+    const orders = await Order.find({
+        hotel: hotel._id,
+        status: 'placed'
+    })
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200,orders,"orders fetched succesfully.."))
+
+})
 
 
  
-export {registerHotel, loginHotel,logoutHotel, addMenuItems}
+export {registerHotel, loginHotel,logoutHotel, addMenuItems, getCurrentHotel, getMenuItems, placedOrders}

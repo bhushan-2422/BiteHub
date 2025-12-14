@@ -1,11 +1,11 @@
 import React from 'react'
 
-const Hotels = () => {
+const UserHome = () => {
   return (
     <div>
-      
+      hello
     </div>
   )
 }
 
-export default Hotels
+export default UserHome

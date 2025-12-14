@@ -115,6 +115,12 @@ const sendOtp = asyncHandler(async(req,res)=>{
     .json(new ApiResponse(200,isOtpSaved,"otp send and saved succesfully.."))  
 })
 
+const getCurrentPartner = asyncHandler(async (req, res) => {
+  return res
+    .status(200)
+    .json(new ApiResponse(200, req.partner, "user fetched succesfully.."));
+});
+
 const acceptOrder = asyncHandler(async(req,res)=>{
     const {orderId} = req.body
     if(!orderId){
@@ -167,4 +173,4 @@ const deliverOrder = asyncHandler(async(req,res)=>{
 
 })
 
-export {partnerRegister, partnerLogin, sendOtp, acceptOrder}
+export {partnerRegister, partnerLogin, sendOtp, acceptOrder, getCurrentPartner}
