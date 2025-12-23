@@ -1,3 +1,4 @@
+import { Hotel } from "../models/hotel.model.js";
 import { Item } from "../models/items.model.js";
 import { Order } from "../models/orders.model.js";
 import { Otp } from "../models/otp.model.js";
@@ -150,6 +151,26 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, req.user, "user fetched succesfully.."));
 });
 
+const logOutUser = asyncHandler(async(req,res)=>{
+  await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {refreshToken: undefined}
+        },
+        {new: true}
+    )
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+    return res
+    .status(200)
+    .cookie("accessToken",options)
+    .cookie("refreshToken",options)
+    .json(new ApiResponse(200,{},"user logged out succesfully..."))
+})
+
+
 const deleteUser = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
@@ -159,8 +180,28 @@ const deleteUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, deletedUser, "user deleted succesfully.."));
 });
 
+
+
+const viewHotels = asyncHandler(async(req,res)=>{
+  
+  const hotels = await Hotel.find({city: req.user?.city})
+
+  return res
+  .status(200)
+  .json(new ApiResponse(200,hotels,"hotels fetched succesfully..."))
+})
+
+const changeCity = asyncHandler(async(req,res)=>{
+  const {city} = req.body
+
+  const user = await User.findByIdAndUpdate(req.user?._id, {city: city})
+  return res
+  .status(200)
+  .json(new ApiResponse(200,{},"city changed succesfully"))
+})
+
 const viewMenu = asyncHandler(async (req, res) => {
-  const { hotelId } = req.body;
+  const { hotelId } = req.params;
   if (!hotelId) {
     throw new ApiError(400, "hotel id is required");
   }
@@ -254,8 +295,11 @@ export {
   sendOtp,
   userLogin,
   deleteUser,
+  viewHotels,
   viewMenu,
   makeOrder,
   addToCart,
-  getCurrentUser
+  getCurrentUser,
+  logOutUser,
+  changeCity
 };

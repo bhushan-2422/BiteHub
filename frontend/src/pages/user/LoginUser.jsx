@@ -1,51 +1,60 @@
 import axios from 'axios'
-import { useState, useContext } from 'react'
-import { Link, useNavigate, Navigate } from 'react-router-dom'
+import { useState, useContext, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../../context/AuthProvider'
 
 export default function LoginUser() {
-  // ✅ ALL HOOKS FIRST (NO CONDITIONS ABOVE THESE)
-  const { user, loading } = useContext(AuthContext)
+  const { user, loading, refreshUser } = useContext(AuthContext)
   const navigate = useNavigate()
 
   const [phone, setPhone] = useState('')
   const [otp, setOtp] = useState('')
   const [otpSent, setOtpSent] = useState(false)
+  const [error, setError] = useState(null)
 
-  // ✅ AFTER hooks, you may branch
+  // ✅ Redirect AFTER auth state resolves
+  useEffect(() => {
+    if (!loading && user?.role === 'user') {
+      navigate('/user/home', { replace: true })
+    }
+  }, [user, loading, navigate])
+
   if (loading) return null
-
-  if (user) {
-    return <Navigate to={`/${user.role}/home`} replace />
-  }
 
   const handleSendOtp = async (e) => {
     e.preventDefault()
+    setError(null)
+
     if (!phone) return
 
     try {
       await axios.post('/api/v1/user/send-otp', { phone })
       setOtpSent(true)
     } catch (err) {
-      console.error(err)
+      setError('Failed to send OTP')
     }
   }
 
   const handleLogin = async (e) => {
     e.preventDefault()
+    setError(null)
+
     if (!otp) return
 
     try {
       await axios.post('/api/v1/user/user-login', { phone, otp })
-      navigate('/user/home')
+      // ❌ NO navigate here
+      // AuthProvider will update `user`
+      await refreshUser()
     } catch (err) {
-      console.error(err)
+      setError('Invalid OTP')
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-orange-100 to-orange-200 p-6">
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
+
         {/* Left Banner */}
         <div className="hidden md:flex flex-col justify-center p-10 bg-gradient-to-br from-orange-500 to-orange-700 text-white">
           <h2 className="text-4xl font-extrabold">Welcome Back</h2>
@@ -58,10 +67,21 @@ export default function LoginUser() {
         <div className="p-8">
           <h3 className="text-2xl font-bold text-gray-800">User Login</h3>
 
-          <form onSubmit={otpSent ? handleLogin : handleSendOtp} className="mt-6 space-y-5">
+          {error && (
+            <div className="mt-4 bg-red-50 text-red-600 p-3 rounded text-sm">
+              {error}
+            </div>
+          )}
+
+          <form
+            onSubmit={otpSent ? handleLogin : handleSendOtp}
+            className="mt-6 space-y-5"
+          >
             <input
               value={phone}
-              onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))}
+              onChange={(e) =>
+                setPhone(e.target.value.replace(/[^0-9]/g, ''))
+              }
               className="w-full border p-2 rounded"
               placeholder="Phone number"
             />
@@ -69,7 +89,9 @@ export default function LoginUser() {
             {otpSent && (
               <input
                 value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                onChange={(e) =>
+                  setOtp(e.target.value.replace(/[^0-9]/g, ''))
+                }
                 className="w-full border p-2 rounded"
                 placeholder="OTP"
               />

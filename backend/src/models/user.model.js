@@ -30,6 +30,10 @@ const userSchema = new Schema(
                 required: true
             }
         },
+        city:{
+            type: String,
+            default: null
+        },
         refreshToken:{
             type: String
         },

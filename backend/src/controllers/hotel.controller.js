@@ -23,7 +23,7 @@ const generateAccessAndRefreshToken = async(hotelId)=>{
 
 const registerHotel = asyncHandler(async(req,res)=>{
     console.log(req.body)
-    const {name, latitude,longitude, phone, email, password} = req.body
+    const {name, latitude,longitude, phone, email, password, city} = req.body
     if(!(name && latitude && longitude && phone && email && password)){
         throw new ApiError(400,"all details are required..")
     }
@@ -48,7 +48,8 @@ const registerHotel = asyncHandler(async(req,res)=>{
                 type:"Point",
                 coordinates:[longitude,latitude]
             },
-            phone
+            phone,
+            city
 
         }
     )
@@ -185,6 +186,12 @@ const placedOrders = asyncHandler(async(req,res)=>{
 
 })
 
-
+const deleteHotel = asyncHandler(async (req, res) => {
+  
+    const deletedHotel = await Hotel.deleteMany({});
+  return res
+    .status(200)
+    .json(new ApiResponse(200, deletedHotel, "hotel deleted succesfully.."));
+});
  
-export {registerHotel, loginHotel,logoutHotel, addMenuItems, getCurrentHotel, getMenuItems, placedOrders}
+export {registerHotel, loginHotel,logoutHotel, addMenuItems, getCurrentHotel, getMenuItems, placedOrders, deleteHotel}

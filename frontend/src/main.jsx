@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthProvider";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
-import App from "./App"; 
+import App from "./App";
 import Home from "./pages/Home";
 import AddMenu from "./pages/hotel/AddMenu";
 import Menu from "./pages/user/Menu";
@@ -20,13 +20,13 @@ import RegisterHotel from "./pages/hotel/RegisterHotel";
 import LoginHotel from "./pages/hotel/LoginHotel";
 import HotelHome from "./pages/hotel/HotelHome";
 import Dashboard from "./pages/hotel/Dashboard";
+import Orders from "./pages/user/Orders";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-
           {/* PUBLIC */}
           <Route path="/" element={<App />}>
             <Route index element={<Home />} />
@@ -45,10 +45,19 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               }
             />
             <Route
-              path="menu"
+              path="hotel/:hotelId/menu"
               element={
                 <ProtectedRoute role="user">
                   <Menu />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="cart"
+              element={
+                <ProtectedRoute role="user">
+                  <Orders />
                 </ProtectedRoute>
               }
             />
@@ -72,8 +81,24 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/hotel">
             <Route path="register" element={<RegisterHotel />} />
             <Route path="login" element={<LoginHotel />} />
-            <Route path="home" element={<HotelHome />} />
-            <Route path="dashboard" element={<Dashboard />} />
+
+            <Route
+              path="home"
+              element={
+                <ProtectedRoute role="hotel">
+                  <HotelHome />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="dashboard"
+              element={
+                <ProtectedRoute role="hotel">
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
 
             <Route
               path="add-menu"
@@ -84,7 +109,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               }
             />
           </Route>
-
         </Routes>
       </BrowserRouter>
     </AuthProvider>

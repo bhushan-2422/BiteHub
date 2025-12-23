@@ -1,12 +1,11 @@
-import { useState, useContext } from "react"
+import { useState, useContext, useEffect } from "react"
 import axios from "axios"
-import { Link, useNavigate, Navigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { AuthContext } from "../../context/AuthProvider"
 
 const LoginHotel = () => {
-  // ✅ ALL hooks at the top
   const navigate = useNavigate()
-  const { user, loading: authLoading } = useContext(AuthContext)
+  const { user, loading: authLoading, refreshUser } = useContext(AuthContext)
 
   const [form, setForm] = useState({
     email: "",
@@ -17,13 +16,14 @@ const LoginHotel = () => {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
 
-  // ⏳ wait for auth check
-  if (authLoading) return null
+  // ✅ Redirect AFTER auth state resolves
+  useEffect(() => {
+    if (!authLoading && user?.role === "hotel") {
+      navigate("/hotel/home", { replace: true })
+    }
+  }, [user, authLoading, navigate])
 
-  // 🔐 already logged in → redirect based on role
-  if (user) {
-    return <Navigate to={`/${user.role}/home`} replace />
-  }
+  if (authLoading) return null
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -43,7 +43,9 @@ const LoginHotel = () => {
         password: form.password,
       })
 
-      navigate("/hotel/home")
+      // ❌ DO NOT navigate here
+      // AuthProvider will re-fetch user
+      await refreshUser()
     } catch (err) {
       setError(err?.response?.data?.message || "Login failed")
     } finally {

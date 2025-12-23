@@ -18,6 +18,9 @@ const hotelSchema = new Schema(
                 required: true
             }
         },
+        city:{
+            type:String
+        },
         hotelAvatar:{
             type:String,
             required:true
@@ -25,7 +28,6 @@ const hotelSchema = new Schema(
         phone:{
             type: Number,
             required: true,
-            unique: true
         },
         email:{
             type: String,

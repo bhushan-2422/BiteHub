@@ -1,16 +1,28 @@
-import { Link, Navigate } from "react-router-dom"
+import { Link, Navigate, useNavigate } from "react-router-dom"
 import { useContext } from "react"
 import { AuthContext } from "../../../context/AuthProvider" 
-
+import axios from "axios"
 const HotelNavbar = () => {
-  const { user, loading } = useContext(AuthContext)
-
+  const { user, loading , setUser} = useContext(AuthContext)
+  const navigate = useNavigate()
   if (loading) return null
 
   // Safety: if somehow navbar renders without hotel auth
   if (!user || user.role !== "hotel") {
     return <Navigate to="/hotel/login" replace />
   }
+
+
+  const handleLogout = async () => {
+      try {
+        await axios.post("/api/v1/hotel/logout-hotel")
+      } catch (err) {
+        console.error("Logout error", err)
+      } finally {
+        setUser(null)
+        navigate("/hotel/login")
+      }
+    }
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b shadow-sm">
@@ -48,10 +60,7 @@ const HotelNavbar = () => {
           </span>
 
           <button
-            onClick={() => {
-              // later replace with proper logout API
-              window.location.href = "/hotel/login"
-            }}
+            onClick={handleLogout}
             className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-orange-600 transition"
           >
             Logout

@@ -7,6 +7,7 @@ const RegisterHotel = () => {
 
   const [form, setForm] = useState({
     name: "",
+    city: "",
     latitude: "",
     longitude: "",
     phone: "",
@@ -23,20 +24,34 @@ const RegisterHotel = () => {
     setForm((prev) => ({ ...prev, [name]: value }))
   }
 
+  const normalizeCity = (city) => {
+    return city
+      .toLowerCase()
+      .replace(/\s+/g, "")   // remove all spaces
+      .trim()
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError(null)
-
-    const formData = new FormData()
-    Object.entries(form).forEach(([key, value]) => {
-      formData.append(key, value)
-    })
 
     if (!hotelAvatar) {
       setError("Hotel image is required")
       return
     }
 
+    const formData = new FormData()
+
+    // normalize city before sending
+    const normalizedCity = normalizeCity(form.city)
+
+    formData.append("name", form.name)
+    formData.append("city", normalizedCity)
+    formData.append("latitude", form.latitude)
+    formData.append("longitude", form.longitude)
+    formData.append("phone", form.phone)
+    formData.append("email", form.email)
+    formData.append("password", form.password)
     formData.append("hotelAvatar", hotelAvatar)
 
     try {
@@ -56,7 +71,7 @@ const RegisterHotel = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-orange-100 to-orange-200 p-6">
       <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl grid grid-cols-1 md:grid-cols-2 overflow-hidden">
 
-        {/* LEFT – Orange Hotel Panel */}
+        {/* LEFT – Orange Panel */}
         <div className="hidden md:flex flex-col justify-center p-10 bg-gradient-to-br from-orange-500 to-orange-700 text-white">
           <h2 className="text-3xl font-extrabold">Grow Your Restaurant</h2>
           <p className="mt-4 text-sm text-orange-100">
@@ -68,10 +83,6 @@ const RegisterHotel = () => {
             <li>• Real-time order management</li>
             <li>• Increased daily revenue</li>
           </ul>
-
-          <div className="mt-8 text-xs text-orange-200">
-            Trusted by local restaurants & cloud kitchens
-          </div>
         </div>
 
         {/* RIGHT – Form */}
@@ -79,9 +90,6 @@ const RegisterHotel = () => {
           <h3 className="text-2xl font-bold text-gray-800">
             Hotel Registration
           </h3>
-          <p className="text-sm text-gray-500 mt-1">
-            Enter your restaurant’s business details
-          </p>
 
           {error && (
             <div className="mt-4 bg-red-50 text-red-600 p-3 rounded text-sm">
@@ -90,10 +98,21 @@ const RegisterHotel = () => {
           )}
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+
             <input
               name="name"
               placeholder="Hotel / Restaurant Name"
               value={form.name}
+              onChange={handleChange}
+              className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-400 focus:outline-none"
+              required
+            />
+
+            {/* CITY */}
+            <input
+              name="city"
+              placeholder="City (e.g. Pune)"
+              value={form.city}
               onChange={handleChange}
               className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-400 focus:outline-none"
               required
